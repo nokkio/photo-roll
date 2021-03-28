@@ -1,0 +1,5 @@
+.nokkio-files
+node_modules
+.nokkio.log
+dev.sqlite
+dist
