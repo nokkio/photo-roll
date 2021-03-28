@@ -31,7 +31,7 @@ export default function Login() {
       <fieldset className="flex flex-col space-y-2">
         <label className="text-xs uppercase text-gray-500">Password</label>
         <input
-          type="text"
+          type="password"
           name="password"
           placeholder="password"
           className="py-1 text-sm border-b border-indigo-100 focus:outline-none focus:border-indigo-700"

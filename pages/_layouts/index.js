@@ -26,7 +26,9 @@ export default function PageLayout({ children }) {
             <Link to="/">Photo Roll</Link>
           </h1>
         </header>
-        <Suspense fallback={<Loading />}>{children}</Suspense>
+        <div className="mx-2 md:mx-0">
+          <Suspense fallback={<Loading />}>{children}</Suspense>
+        </div>
         <footer className="p-12 flex flex-col items-center justify-center text-sm text-gray-500">
           👋
           <p className="mt-1">
