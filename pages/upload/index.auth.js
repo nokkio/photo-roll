@@ -4,6 +4,10 @@ import cx from 'classnames';
 import { useAuth } from '@nokkio/auth';
 import { useNavigate } from '@nokkio/router';
 
+export function getTitle() {
+  return 'Photo Roll - Upload';
+}
+
 function Step({ number, label, complete = false, active }) {
   const wrapperClasses = cx('flex', 'items-center', 'space-x-3', {
     ['text-indigo-700']: active,
