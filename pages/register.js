@@ -30,6 +30,7 @@ export default function Login() {
       <fieldset className="flex flex-col space-y-2">
         <label className="text-xs uppercase text-gray-500">Username</label>
         <input
+          autoFocus
           type="text"
           name="username"
           placeholder="username"

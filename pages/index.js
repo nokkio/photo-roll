@@ -1,7 +1,8 @@
 import React from 'react';
 
-import { usePhotos } from '@nokkio/magic';
+import { usePhotos, deleteLike } from '@nokkio/magic';
 import { Img } from '@nokkio/image';
+import { useAuth } from '@nokkio/auth';
 
 export function getTitle() {
   return 'Photo Roll';
@@ -27,6 +28,17 @@ function Heart() {
 }
 
 function Photo({ photo }) {
+  const { isAuthenticated, user } = useAuth();
+
+  function toggleLike() {
+    if (photo.likes.length === 1) {
+      const like = photo.likes[0];
+      like.delete();
+    } else {
+      photo.createLike().then(() => photo.reload());
+    }
+  }
+
   return (
     <div className="bg-white shadow">
       <div className="p-6 flex space-x-2 font-medium items-center">
@@ -41,9 +53,18 @@ function Photo({ photo }) {
         <Img image={photo.image} width={700} />
       </div>
       <div className="p-3 space-y-1">
-        <p className="flex uppercase text-xs items-center space-x-1 text-gray-400">
-          <Heart /> <span>0</span>
-        </p>
+        {isAuthenticated ? (
+          <button
+            onClick={toggleLike}
+            className="flex uppercase text-xs items-center space-x-1 text-gray-400"
+          >
+            <Heart /> <span>{photo.likesCount}</span>
+          </button>
+        ) : (
+          <p className="flex uppercase text-xs items-center space-x-1 text-gray-400">
+            <Heart /> <span>{photo.likesCount}</span>
+          </p>
+        )}
         <p>{photo.caption}</p>
         <p className="uppercase text-xs text-gray-400">
           {new Intl.DateTimeFormat('default', { dateStyle: 'medium' }).format(
@@ -56,10 +77,18 @@ function Photo({ photo }) {
 }
 
 export default function Index() {
+  const { isAuthenticated, user } = useAuth();
+
   const { photos } = usePhotos({
     sort: '-createdAt',
     limit: 10,
-    with: ['user'],
+    with: isAuthenticated
+      ? {
+          user: true,
+          likes: { userId: user.id },
+        }
+      : ['user'],
+    withCounts: ['likes'],
   });
 
   if (photos.isLoading) {

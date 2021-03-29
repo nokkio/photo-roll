@@ -11,13 +11,19 @@ module.exports = function ({ defineModel, types }) {
     isPublic: types.bool(true),
   });
 
+  const Like = defineModel('Like');
+
   User.hasMany(Photo);
   User.actAsAuth();
 
+  Like.isOneToOneOf(Photo, User);
+
+  Like.canRead();
   Photo.canRead({ isPublic: true });
 
   return {
     User,
     Photo,
+    Like,
   };
 };
