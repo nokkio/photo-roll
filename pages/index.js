@@ -1,11 +1,21 @@
 import React from 'react';
 
-import { usePhotos, deleteLike } from '@nokkio/magic';
+//import { usePhotos, deleteLike } from '@nokkio/magic';
 import { Img } from '@nokkio/image';
-import { useAuth } from '@nokkio/auth';
+//import { useAuth } from '@nokkio/auth';
+
+import { usePhotos } from '../api/store';
 
 export function getTitle() {
   return 'Photo Roll';
+}
+
+function Button({ children, ...rest }) {
+  return (
+    <button className="disabled:text-gray-400 bg-white border p-2" {...rest}>
+      {children}
+    </button>
+  );
 }
 
 function Heart() {
@@ -28,66 +38,44 @@ function Heart() {
 }
 
 function Photo({ photo }) {
-  const { isAuthenticated, user } = useAuth();
-
-  function toggleLike() {
-    if (photo.likes.length === 1) {
-      const like = photo.likes[0];
-      like.delete();
-    } else {
-      photo.createLike().then(() => photo.reload());
-    }
-  }
-
   return (
     <div className="bg-white shadow">
-      <div className="p-6 flex space-x-2 font-medium items-center">
-        <Img
-          className="rounded-full w-8 h-8 border-2 border-indigo-700"
-          image={photo.user.avatar}
-          width={48}
-        />
-        <span>{photo.user.username}</span>
-      </div>
-      <div>
-        <Img image={photo.image} width={700} />
-      </div>
-      <div className="p-3 space-y-1">
-        {isAuthenticated ? (
-          <button
-            onClick={toggleLike}
-            className="flex uppercase text-xs items-center space-x-1 text-gray-400"
-          >
-            <Heart /> <span>{photo.likesCount}</span>
-          </button>
-        ) : (
-          <p className="flex uppercase text-xs items-center space-x-1 text-gray-400">
-            <Heart /> <span>{photo.likesCount}</span>
-          </p>
-        )}
-        <p>{photo.caption}</p>
-        <p className="uppercase text-xs text-gray-400">
-          {new Intl.DateTimeFormat('default', { dateStyle: 'medium' }).format(
-            new Date(photo.createdAt),
-          )}
+      {photo.caption} - user: {photo.user.username} - likes: {photo.likesCount}
+      {photo.likes.length > 0 && (
+        <>
+          <p>Likes:</p>
+          <ul>
+            {photo.likes.map((like) => (
+              <li key={like.id}>
+                {like.userId}{' '}
+                <Button onClick={() => like.delete()}>delete</Button>
+              </li>
+            ))}
+          </ul>
+          <div className="flex space-x-2">
+            {photo.likes.hasPrev() && (
+              <Button onClick={() => photo.likes.prev()}>prev</Button>
+            )}
+            {photo.likes.hasNext() && (
+              <Button onClick={() => photo.likes.next()}>next</Button>
+            )}
+          </div>
+        </>
+      )}
+      {photo.likes.length === 0 && (
+        <p>
+          <Button onClick={() => photo.createLike()}>Like</Button>
         </p>
-      </div>
+      )}
     </div>
   );
 }
 
 export default function Index() {
-  const { isAuthenticated, user } = useAuth();
-
-  const { photos } = usePhotos({
+  const photos = usePhotos({
     sort: '-createdAt',
-    limit: 10,
-    with: isAuthenticated
-      ? {
-          user: true,
-          likes: { userId: user.id },
-        }
-      : ['user'],
+    limit: 2,
+    with: { user: true, likes: { limit: 2 } },
     withCounts: ['likes'],
   });
 
@@ -107,11 +95,28 @@ export default function Index() {
     );
   }
 
+  function setCaption() {
+    photos[0].update({
+      caption: 'hi hi ' + Date.now(),
+    });
+  }
+
   return (
     <div className="space-y-12">
       {photos.map((photo) => (
         <Photo key={photo.id} photo={photo} />
       ))}
+
+      <div className="flex space-x-2">
+        <Button disabled={!photos.hasPrev()} onClick={() => photos.prev()}>
+          prev
+        </Button>
+        <Button disabled={!photos.hasNext()} onClick={() => photos.next()}>
+          next
+        </Button>
+
+        <Button onClick={setCaption}>set caption on first photo</Button>
+      </div>
     </div>
   );
 }
