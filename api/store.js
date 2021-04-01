@@ -165,22 +165,82 @@ function storeRecord(Model, record, subscription) {
   store.recordsToSubscriptions[record.id].add(subscription);
 }
 
-// Subscriptions manage a subset of the store's data and let the subscriber
-// know when that subset has potentially changed. Subscribers include @nokkio/magic
-// hooks as well as other Subscriptions.
-class Subscription {
-  constructor(model, query, initialRecords = null) {
+class BaseSubscription {
+  constructor(model, query) {
     this.id = Symbol('subscription');
+
     this.value = { isLoading: true };
     this.subscribers = {};
     this.model = model;
     this.query = query;
+    this.freshenOnNextSubscribe = true;
+    this.relationshipSubscriptions = {};
+    this.relationshipUnsubscribers = [];
+    store.subscriptions[this.id] = this;
+  }
+
+  hasCountsForModel(model) {
+    if (this.query.withCounts) {
+      if (Array.isArray(this.query.withCounts)) {
+        return this.query.withCounts.includes(model.collectionName);
+      }
+
+      return Object.keys(this.query.withCounts).includes(model.collectionName);
+    }
+
+    return false;
+  }
+
+  notify() {
+    // TODO: could move this even later in the process, perhaps when
+    // getCurrentValue is called and memoize it?
+    this.hydrate();
+
+    Object.getOwnPropertySymbols(this.subscribers).forEach((s) => {
+      this.subscribers[s]();
+    });
+  }
+
+  getCurrentValue() {
+    return this.value;
+  }
+
+  handleUnsubscribe(key) {
+    delete this.subscribers[key];
+
+    // If nothing else is subscribing, disconnect from other relationship subs
+    if (Object.getOwnPropertySymbols(this.subscribers).length === 0) {
+      this.relationshipUnsubscribers.forEach((u) => u());
+      delete store.subscriptions[this.id];
+
+      // TODO: do some GC in the store?
+    }
+  }
+
+  subscribe(fn) {
+    const key = Symbol('subscriber');
+
+    this.subscribers[key] = fn;
+
+    if (this.freshenOnNextSubscribe) {
+      this.freshen();
+      this.freshenOnNextSubscribe = false;
+    }
+
+    return () => this.handleUnsubscribe(key);
+  }
+}
+// Subscriptions manage a subset of the store's data and let the subscriber
+// know when that subset has potentially changed. Subscribers include @nokkio/magic
+// hooks as well as other Subscriptions.
+class Subscription extends BaseSubscription {
+  constructor(model, query, initialRecords = null) {
+    super(model, query);
+
     this.freshenOnNextSubscribe = initialRecords === null;
     this.key = initialRecords
       ? initialRecords.links.self.replace(/^\/_\/data\//, '')
       : model.collectionName + stringifyQuery(query);
-    this.relationshipSubscriptions = {};
-    this.relationshipUnsubscribers = [];
 
     // Some subcriptions start with a know set of fresh records,
     // like relationship data.
@@ -200,20 +260,6 @@ class Subscription {
       this.links = initialRecords.links;
       this.hydrate();
     }
-
-    store.subscriptions[this.id] = this;
-  }
-
-  hasCountsForModel(model) {
-    if (this.query.withCounts) {
-      if (Array.isArray(this.query.withCounts)) {
-        return this.query.withCounts.includes(model.collectionName);
-      }
-
-      return Object.keys(this.query.withCounts).includes(model.collectionName);
-    }
-
-    return false;
   }
 
   // Used by pagination methods
@@ -289,57 +335,105 @@ class Subscription {
       this.setKey(k),
     );
   }
+}
 
-  notify() {
-    // TODO: could move this even later in the process, perhaps when
-    // getCurrentValue is called and memoize it?
-    this.hydrate();
+class SingleSubscription extends BaseSubscription {
+  constructor(model, id, query) {
+    super(model, query);
 
-    Object.getOwnPropertySymbols(this.subscribers).forEach((s) => {
-      this.subscribers[s]();
+    this.modelId = id;
+    this.key = model.collectionName + '/' + id + stringifyQuery(query);
+  }
+
+  // freshen() gets the latest data for this subscription, then notifies subscribers.
+  // TODO: what to do about calls to freshen() while one is already
+  // in flight but not complete?
+  freshen() {
+    makeApiRequest(this.key).then(({ data, links, relationships = {} }) => {
+      const relationshipUnsubscribers = [];
+      const relationshipSubscriptions = [];
+
+      storeRecord(this.model, data, this);
+
+      for (const [pluralName, result] of Object.entries(relationships)) {
+        const model = modelMap[pluralName];
+        const sub = new Subscription(model, {}, result);
+
+        relationshipUnsubscribers.push(sub.subscribe(() => this.notify()));
+
+        relationshipSubscriptions.push(sub);
+      }
+
+      this.relationshipUnsubscribers.forEach((u) => u());
+      this.relationshipUnsubscribers = relationshipUnsubscribers;
+      this.relationshipSubscriptions = relationshipSubscriptions;
+
+      // Storing the last known set of results for a key allows us to start with
+      // stale data if another subscription boots up with the same key.
+      // That subscription would show stale data while it is getting a fresh result.
+      //
+      // Turned off for now b/c hydrating just the ids without relationship data causes
+      // unexpected half-hydrated data.
+      // store.results[this.key] = ids;
+
+      this.notify();
     });
   }
 
-  getCurrentValue() {
-    return this.value;
-  }
+  hydrate() {
+    // The subscription only stores its ids, we don't boot up the full records
+    // until necessary.
+    const id = this.modelId;
+    const record = store.records[this.model.singleName][id];
+    const relationshipData = {};
 
-  scheduleUpdate() {
-    this.freshenOnNextSubscribe = true;
-  }
+    this.relationshipSubscriptions.forEach((sub) => {
+      relationshipData[sub.model.collectionName] = sub.getCurrentValue();
+    });
 
-  handleUnsubscribe(key) {
-    delete this.subscribers[key];
-
-    // If nothing else is subscribing, disconnect from other relationship subs
-    if (Object.getOwnPropertySymbols(this.subscribers).length === 0) {
-      this.relationshipUnsubscribers.forEach((u) => u());
-      delete store.subscriptions[this.id];
-
-      // TODO: do some GC is the store?
-    }
-  }
-
-  subscribe(fn) {
-    const key = Symbol('subscriber');
-
-    this.subscribers[key] = fn;
-
-    if (this.freshenOnNextSubscribe) {
-      this.freshen();
-      this.freshenOnNextSubscribe = false;
-    }
-
-    return () => this.handleUnsubscribe(key);
+    this.value = new RuntimeModel(
+      { ...record, ...relationshipData },
+      this.model,
+    );
   }
 }
 
 // An example of what @nokkio/magic would create for a collection
 const createCollectionHook = (Model) => (q) => {
-  const subscription = useRef(new Subscription(Model, q));
-  const [v, setV] = useState(subscription.current.getCurrentValue());
+  const [v, setV] = useState({ isLoading: true });
+  const key = stringifyQuery(q);
 
   useEffect(() => {
+    let unsubscribed = false;
+    const subscription = new Subscription(Model, q);
+
+    const update = () => {
+      if (unsubscribed) {
+        return;
+      }
+
+      setV(subscription.getCurrentValue());
+    };
+
+    const unsub = subscription.subscribe(update);
+
+    return () => {
+      unsubscribed = true;
+      unsub();
+    };
+  }, [key]);
+
+  return v;
+};
+
+// An example of what @nokkio/magic would create for a single hook
+const createSingleHook = (Model) => (id, q = {}) => {
+  const [v, setV] = useState({ isLoading: true });
+  const key = stringifyQuery(q);
+
+  useEffect(() => {
+    const subscription = new SingleSubscription(Model, id, q);
+
     let unsubscribed = false;
 
     const update = () => {
@@ -347,21 +441,22 @@ const createCollectionHook = (Model) => (q) => {
         return;
       }
 
-      setV(subscription.current.getCurrentValue());
+      setV(subscription.getCurrentValue());
     };
 
-    const unsub = subscription.current.subscribe(update);
+    const unsub = subscription.subscribe(update);
 
     return () => {
       unsubscribed = true;
       unsub();
     };
-  }, []);
+  }, [key]);
 
   return v;
 };
 
 export const usePhotos = createCollectionHook(Photo);
+export const usePhoto = createSingleHook(Photo);
 
 // Copies of data-bindings stuff from here on out
 export function mutation(method, path, payload) {

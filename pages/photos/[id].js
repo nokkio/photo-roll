@@ -1,15 +1,13 @@
 import React from 'react';
 
-import { Link } from '@nokkio/router';
-
 //import { usePhotos, deleteLike } from '@nokkio/magic';
-import { Img } from '@nokkio/image';
+//import { Img } from '@nokkio/image';
 //import { useAuth } from '@nokkio/auth';
 
-import { usePhotos } from '../api/store';
+import { usePhoto } from '../../api/store';
 
 export function getTitle() {
-  return 'Photo Roll';
+  return 'Photo';
 }
 
 function Button({ children, ...rest }) {
@@ -42,8 +40,7 @@ function Heart() {
 function Photo({ photo }) {
   return (
     <div className="bg-white shadow">
-      <Link to={`/photos/${photo.id}`}>{photo.caption}</Link> - user:{' '}
-      {photo.user.username} - likes: {photo.likesCount}
+      {photo.caption} - user: {photo.user.username} - likes: {photo.likesCount}
       {photo.likes.length > 0 && (
         <>
           <p>Likes:</p>
@@ -74,15 +71,13 @@ function Photo({ photo }) {
   );
 }
 
-export default function Index() {
-  const photos = usePhotos({
-    sort: '-createdAt',
-    limit: 2,
+export default function PhotoScreen({ id }) {
+  const photo = usePhoto(id, {
     with: { user: true, likes: { limit: 2 } },
     withCounts: ['likes'],
   });
 
-  if (photos.isLoading) {
+  if (photo.isLoading) {
     return (
       <div className="w-full bg-gray-50 text-gray-300 py-12 text-center">
         Loading...
@@ -90,34 +85,17 @@ export default function Index() {
     );
   }
 
-  if (photos.length === 0) {
-    return (
-      <div className="w-full bg-gray-50 text-gray-300 py-12 text-center">
-        No photos yet.
-      </div>
-    );
-  }
-
   function setCaption() {
-    photos[0].update({
+    photo.update({
       caption: 'hi hi ' + Date.now(),
     });
   }
 
   return (
     <div className="space-y-12">
-      {photos.map((photo) => (
-        <Photo key={photo.id} photo={photo} />
-      ))}
+      <Photo key={photo.id} photo={photo} />
 
       <div className="flex space-x-2">
-        <Button disabled={!photos.hasPrev()} onClick={() => photos.prev()}>
-          prev
-        </Button>
-        <Button disabled={!photos.hasNext()} onClick={() => photos.next()}>
-          next
-        </Button>
-
         <Button onClick={setCaption}>set caption on first photo</Button>
       </div>
     </div>
