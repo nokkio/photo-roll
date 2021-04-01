@@ -169,6 +169,7 @@ class BaseSubscription {
   constructor(model, query) {
     this.id = Symbol('subscription');
 
+    this.ids = [];
     this.value = { isLoading: true };
     this.subscribers = {};
     this.model = model;
@@ -205,14 +206,35 @@ class BaseSubscription {
     return this.value;
   }
 
+  cleanupExpiredRecords(ids) {
+    ids.forEach((id) => {
+      const set = store.recordsToSubscriptions[id];
+
+      if (!set) {
+        return;
+      }
+
+      if (set.has(this)) {
+        set.delete(this);
+      }
+
+      if (set.size === 0) {
+        delete store.recordsToSubscriptions[id];
+        delete store.records[this.model.singleName][id];
+      }
+    });
+  }
+
   handleUnsubscribe(key) {
     delete this.subscribers[key];
 
     // If nothing else is subscribing, disconnect from other relationship subs
     if (Object.getOwnPropertySymbols(this.subscribers).length === 0) {
       this.relationshipUnsubscribers.forEach((u) => u());
-      delete store.subscriptions[this.id];
 
+      this.cleanupExpiredRecords(this.ids);
+
+      delete store.subscriptions[this.id];
       // TODO: do some GC in the store?
     }
   }
@@ -252,7 +274,6 @@ class Subscription extends BaseSubscription {
         this.hydrate();
       }
     } else {
-      this.ids = [];
       initialRecords.data.forEach((r) => {
         this.ids.push(r.id);
         storeRecord(this.model, r, this);
@@ -296,6 +317,8 @@ class Subscription extends BaseSubscription {
           }
         }
       });
+
+      this.cleanupExpiredRecords(this.ids.filter((i) => !ids.includes(i)));
 
       this.ids = ids;
       this.links = links;
@@ -341,6 +364,7 @@ class SingleSubscription extends BaseSubscription {
   constructor(model, id, query) {
     super(model, query);
 
+    this.ids = [id];
     this.modelId = id;
     this.key = model.collectionName + '/' + id + stringifyQuery(query);
   }
