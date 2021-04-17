@@ -79,7 +79,7 @@ function Photo({ photo }) {
 export default function Index() {
   const { isAuthenticated, user } = useAuth();
 
-  const { photos } = usePhotos({
+  const photos = usePhotos({
     sort: '-createdAt',
     limit: 10,
     with: isAuthenticated
