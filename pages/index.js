@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { usePhotos, deleteLike } from '@nokkio/magic';
+import { usePhotos } from '@nokkio/magic';
 import { Img } from '@nokkio/image';
 import { useAuth } from '@nokkio/auth';
 
@@ -28,14 +28,14 @@ function Heart() {
 }
 
 function Photo({ photo }) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   function toggleLike() {
     if (photo.likes.length === 1) {
       const like = photo.likes[0];
       like.delete();
     } else {
-      photo.createLike().then(() => photo.reload());
+      photo.createLike();
     }
   }
 
@@ -50,7 +50,7 @@ function Photo({ photo }) {
         <span>{photo.user.username}</span>
       </div>
       <div>
-        <Img image={photo.image} width={700} />
+        <Img image={photo.image} className="w-full" />
       </div>
       <div className="p-3 space-y-1">
         {isAuthenticated ? (
