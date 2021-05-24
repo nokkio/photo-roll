@@ -24,15 +24,17 @@ function Heart() {
 }
 
 export default function Photo({ photo }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   function toggleLike(e) {
     e.stopPropagation();
     e.preventDefault();
 
-    if (photo.likes.length === 1) {
-      const like = photo.likes[0];
-      like.delete();
+    // Currently a bug in Nokkio causing the parent "with" clause to
+    // not filter, so do a bit of extra checking here.
+    const userLike = photo.likes.find((like) => like.userId === user.id);
+    if (userLike) {
+      userLike.delete();
     } else {
       photo.createLike();
     }
