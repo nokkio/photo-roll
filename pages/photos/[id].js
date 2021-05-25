@@ -16,7 +16,7 @@ export default function PhotoRoute({ id }) {
     with: isAuthenticated
       ? {
           user: true,
-          likes: { userId: user.id },
+          likes: { filter: { userId: user.id } },
         }
       : ['user'],
     withCounts: ['likes'],
