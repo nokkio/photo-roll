@@ -1,24 +1,12 @@
 import React from 'react';
-import { useAuth } from '@nokkio/auth';
-import { Link, useNavigate } from '@nokkio/router';
+import { useLoginForm } from '@nokkio/auth';
+import { Link } from '@nokkio/router';
 
 export default function Login() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  function onSubmit(e) {
-    e.preventDefault();
-    const { username, password } = e.target.elements;
-    login(username.value, password.value).then(() => {
-      navigate('/');
-    });
-  }
+  const { Form } = useLoginForm();
 
   return (
-    <form
-      className="bg-white w-96 mx-auto p-6 space-y-8 shadow"
-      onSubmit={onSubmit}
-    >
+    <Form className="bg-white w-96 mx-auto p-6 space-y-8 shadow">
       <fieldset className="flex flex-col space-y-2">
         <label className="text-xs uppercase text-gray-500">Username</label>
         <input
@@ -49,6 +37,6 @@ export default function Login() {
           Signup for an account.
         </Link>
       </p>
-    </form>
+    </Form>
   );
 }

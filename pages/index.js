@@ -24,14 +24,6 @@ export default function Index() {
     withCounts: ['likes'],
   });
 
-  if (photos.isLoading) {
-    return (
-      <div className="w-full bg-gray-50 text-gray-300 py-12 text-center">
-        Loading...
-      </div>
-    );
-  }
-
   if (photos.length === 0) {
     return (
       <div className="w-full bg-gray-50 text-gray-300 py-12 text-center">

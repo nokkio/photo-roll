@@ -18,9 +18,6 @@ module.exports = function ({ defineModel, types }) {
 
   Like.isOneToOneOf(Photo, User);
 
-  Like.canRead();
-  Photo.canRead({ isPublic: true });
-
   return {
     User,
     Photo,
