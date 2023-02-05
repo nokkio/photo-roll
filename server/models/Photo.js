@@ -14,5 +14,8 @@ export async function beforeCreate({ fields, userId }) {
     throw new Error('unauthorized');
   }
 
-  return fields;
+  return {
+    ...fields,
+    userId,
+  };
 }

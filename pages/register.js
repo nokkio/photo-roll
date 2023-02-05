@@ -1,6 +1,5 @@
-import React from 'react';
 import { useRegisterForm } from '@nokkio/auth';
-import { Link, useNavigate } from '@nokkio/router';
+import { Input } from '@nokkio/forms';
 
 export default function Login() {
   const { Form, isProcessing } = useRegisterForm();
@@ -9,7 +8,7 @@ export default function Login() {
     <Form className="bg-white w-96 mx-auto p-6 space-y-8 shadow">
       <fieldset className="flex flex-col space-y-2">
         <label className="text-xs uppercase text-gray-500">Username</label>
-        <input
+        <Input
           autoFocus
           type="text"
           name="username"
@@ -19,7 +18,7 @@ export default function Login() {
       </fieldset>
       <fieldset className="flex flex-col space-y-2">
         <label className="text-xs uppercase text-gray-500">Password</label>
-        <input
+        <Input
           type="password"
           name="password"
           placeholder="password"
@@ -29,7 +28,7 @@ export default function Login() {
 
       <fieldset className="flex flex-col space-y-2">
         <label className="text-xs uppercase text-gray-500">Avatar</label>
-        <input
+        <Input
           type="file"
           name="avatar"
           className="py-1 text-xs focus:outline-none focus:border-indigo-700"

@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import cx from 'classnames';
 
 import { useAuth } from '@nokkio/auth';
 import { useNavigate } from '@nokkio/router';
 
-export function getTitle() {
-  return 'Photo Roll - Upload';
+export function getPageMetadata() {
+  return { title: 'Photo Roll: Upload' }
 }
 
 function Step({ number, label, complete = false, active }) {
@@ -86,7 +86,7 @@ function ImagePreview({ file }) {
 
     reader.addEventListener(
       'load',
-      function () {
+      function() {
         setSrc(reader.result);
       },
       false,

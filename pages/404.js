@@ -1,6 +1,10 @@
 import React from 'react';
 import { Link } from '@nokkio/router';
 
+export function getPageMetadata() {
+  return { title: 'Not found', http: { status: 404 } };
+}
+
 export default function NotFound() {
   return (
     <div className="w-full bg-gray-50 text-gray-500 py-12 text-center">
@@ -11,8 +15,4 @@ export default function NotFound() {
       .
     </div>
   );
-}
-
-export function getTitle() {
-  return 'Not found';
 }

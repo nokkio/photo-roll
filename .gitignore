@@ -3,3 +3,5 @@ node_modules
 .nokkio.log
 dev.sqlite
 dist
+server/bundle-*
+server/vendor

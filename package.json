@@ -6,13 +6,23 @@
   "main": "index.js",
   "dependencies": {
     "classnames": "^2.2.6",
-    "react": "^18.0.0-beta-24dd07bd2-20211208",
-    "react-dom": "^18.0.0-beta-24dd07bd2-20211208"
+    "prop-types": "^15.8.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "autoprefixer": "^10.4.2",
+    "postcss": "^8.4.8",
+    "prettier": "^2.8.3",
+    "tailwindcss": "^3.2.4"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "nokkio": {
+    "id": "25XA1yOxyaItW6pwazAiOYJuriK",
+    "version": "v0.0.0-55c06cd9"
+  }
 }

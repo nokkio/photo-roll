@@ -1,12 +1,26 @@
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 
-import { usePhoto, usePhotoLikes } from '@nokkio/magic';
-import { useAuth } from '@nokkio/auth';
+import { Photo, usePhotoLikes } from '@nokkio/magic';
+import { usePageData } from '@nokkio/router';
 
-import Photo from '../../components/Photo';
+import { default as PhotoComponent } from 'components/Photo';
 
-export function getTitle() {
-  return 'Photo Roll';
+export function getPageData({ params, auth }) {
+  return Photo.findById(params.id, {
+    with: auth
+      ? {
+          user: true,
+          likes: { filter: { userId: auth.id } },
+        }
+      : ['user'],
+    withCounts: ['likes'],
+  });
+}
+
+export function getPageMetadata({ pageData }) {
+  return {
+    title: `Photo Roll: ${pageData.caption} by ${pageData.user.username}`,
+  };
 }
 
 function RecentLikes({ id }) {
@@ -28,7 +42,7 @@ function RecentLikes({ id }) {
           <span className="font-medium">
             {new Intl.DateTimeFormat('default', {
               dateStyle: 'short',
-            }).format(new Date(like.createdAt))}
+            }).format(like.createdAt)}
           </span>{' '}
           liked by <strong className="text-black">{like.user.username}</strong>
         </div>
@@ -37,24 +51,14 @@ function RecentLikes({ id }) {
   );
 }
 
-export default function PhotoRoute({ id }) {
-  const { isAuthenticated, user } = useAuth();
-
-  const photo = usePhoto(id, {
-    with: isAuthenticated
-      ? {
-          user: true,
-          likes: { filter: { userId: user.id } },
-        }
-      : ['user'],
-    withCounts: ['likes'],
-  });
+export default function PhotoRoute({ params }) {
+  const photo = usePageData();
 
   return (
     <div className="space-y-6">
-      <Photo key={photo.id} photo={photo} />
+      <PhotoComponent key={photo.id} photo={photo} />
       <Suspense>
-        <RecentLikes id={id} />
+        <RecentLikes id={params.id} />
       </Suspense>
     </div>
   );

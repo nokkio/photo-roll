@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import { Link, useLocation } from '@nokkio/router';
 
-import '@nokkio/tailwind';
+import './root.css';
 
 function Loading() {
   return (

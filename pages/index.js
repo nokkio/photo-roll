@@ -1,13 +1,7 @@
-import React from 'react';
-
 import { usePhotos } from '@nokkio/magic';
 import { useAuth } from '@nokkio/auth';
 
-import Photo from '../components/Photo';
-
-export function getTitle() {
-  return 'Photo Roll';
-}
+import Photo from 'components/Photo';
 
 export default function Index() {
   const { isAuthenticated, user } = useAuth();
@@ -17,9 +11,9 @@ export default function Index() {
     limit: 10,
     with: isAuthenticated
       ? {
-          user: true,
-          likes: { filter: { userId: user.id } },
-        }
+        user: true,
+        likes: { filter: { userId: user.id } },
+      }
       : ['user'],
     withCounts: ['likes'],
   });

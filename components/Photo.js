@@ -41,13 +41,17 @@ export default function Photo({ photo }) {
   }
 
   return (
-    <Link to={`/photos/${photo.id}`} className="block bg-white shadow">
+    <Link to={`/photos/${photo.id}`} className="flex flex-col bg-white shadow">
       <div className="p-6 flex space-x-2 font-medium items-center">
-        <Img
-          className="rounded-full w-8 h-8 border-2 border-indigo-700"
-          image={photo.user.avatar}
-          width={48}
-        />
+        <div
+          className="overflow-hidden rounded-full w-8 h-8 border-2 border-indigo-700 cover"
+        >
+          <Img
+            className="object-cover w-8 h-8"
+            image={photo.user.avatar}
+            width={48}
+          />
+        </div>
         <span>{photo.user.username}</span>
       </div>
       <div>
@@ -69,7 +73,7 @@ export default function Photo({ photo }) {
         <p>{photo.caption}</p>
         <p className="uppercase text-xs text-gray-400">
           {new Intl.DateTimeFormat('default', { dateStyle: 'medium' }).format(
-            new Date(photo.createdAt),
+            photo.createdAt,
           )}
         </p>
       </div>
