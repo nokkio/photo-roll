@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 
 import { Photo, usePhotoLikes } from '@nokkio/magic';
 import { usePageData } from '@nokkio/router';
+import { createImageURL } from '@nokkio/image';
 
 import { default as PhotoComponent } from 'components/Photo';
 
@@ -20,6 +21,12 @@ export function getPageData({ params, auth }) {
 export function getPageMetadata({ pageData }) {
   return {
     title: `Photo Roll: ${pageData.caption} by ${pageData.user.username}`,
+    openGraph: {
+      image: {
+        ...createImageURL(pageData.image, { width: 1400 }),
+        alt: pageData.caption,
+      },
+    },
   };
 }
 

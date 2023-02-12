@@ -9,6 +9,7 @@ export default function Doc({ children }) {
           name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
+        <meta property="og:site_name" content="Photo Roll" />
         <title>Photo Roll</title>
       </Head>
       <Body className="bg-gray-50">
