@@ -43,9 +43,7 @@ export default function Photo({ photo }) {
   return (
     <Link to={`/photos/${photo.id}`} className="flex flex-col bg-white shadow">
       <div className="p-6 flex space-x-2 font-medium items-center">
-        <div
-          className="overflow-hidden rounded-full w-8 h-8 border-2 border-indigo-700 cover"
-        >
+        <div className="overflow-hidden rounded-full w-8 h-8 border-2 border-indigo-700 cover">
           <Img
             className="object-cover w-8 h-8"
             image={photo.user.avatar}
@@ -55,7 +53,7 @@ export default function Photo({ photo }) {
         <span>{photo.user.username}</span>
       </div>
       <div>
-        <Img image={photo.image} className="w-full" />
+        <Img width={700} image={photo.image} className="w-full" />
       </div>
       <div className="p-3 space-y-1">
         {isAuthenticated ? (
