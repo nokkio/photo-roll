@@ -9,12 +9,10 @@ export default function Index() {
   const photos = usePhotos({
     sort: '-createdAt',
     limit: 10,
-    with: isAuthenticated
-      ? {
-        user: true,
-        likes: { filter: { userId: user.id } },
-      }
-      : ['user'],
+    with: {
+      user: true,
+      likes: isAuthenticated ? { filter: { userId: user.id } } : undefined,
+    },
     withCounts: ['likes'],
   });
 

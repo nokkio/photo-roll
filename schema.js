@@ -1,3 +1,4 @@
+/** @type {import('@nokkio/schema').Config} */
 module.exports = function ({ defineModel, types }) {
   const User = defineModel('User', {
     username: types.string().unique(),

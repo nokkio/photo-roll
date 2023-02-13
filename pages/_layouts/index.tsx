@@ -1,7 +1,7 @@
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import { Link, useLocation } from '@nokkio/router';
 
-import './root.css';
+import './index.css';
 
 function Loading() {
   return (
@@ -11,7 +11,11 @@ function Loading() {
   );
 }
 
-export default function PageLayout({ children }) {
+export default function PageLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const n = useLocation();
 
   const shouldShowUploadButton = !['/login', '/register', '/upload'].includes(

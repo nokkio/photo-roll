@@ -1,14 +1,24 @@
-import { useEffect, useRef, useState } from 'react';
+import { SyntheticEvent, useEffect, useRef, useState } from 'react';
 import cx from 'classnames';
 
 import { useAuth } from '@nokkio/auth';
 import { useNavigate } from '@nokkio/router';
 
 export function getPageMetadata() {
-  return { title: 'Photo Roll: Upload' }
+  return { title: 'Photo Roll: Upload' };
 }
 
-function Step({ number, label, complete = false, active }) {
+function Step({
+  number,
+  label,
+  complete = false,
+  active,
+}: {
+  number: number;
+  label: string;
+  complete?: boolean;
+  active: boolean;
+}) {
   const wrapperClasses = cx('flex', 'items-center', 'space-x-3', {
     ['text-indigo-700']: active,
     ['text-gray-700']: complete,
@@ -58,18 +68,19 @@ function Check() {
   );
 }
 
-function SelectImageStep({ onSelect }) {
-  const fileInput = useRef();
+function SelectImageStep({ onSelect }: { onSelect: (f: File) => void }) {
+  const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fileInput.current.addEventListener('change', (e) => {
-      onSelect(e.target.files[0]);
+    fileInput.current?.addEventListener('change', (e) => {
+      const input = e.currentTarget as HTMLInputElement;
+      onSelect(input.files![0]);
     });
   }, []);
 
   return (
     <button
-      onClick={() => fileInput.current.click()}
+      onClick={() => fileInput.current!.click()}
       className="w-full bg-gray-50 border-t p-6 text-gray-400 text-center"
     >
       Click here to select an image to upload.
@@ -78,16 +89,16 @@ function SelectImageStep({ onSelect }) {
   );
 }
 
-function ImagePreview({ file }) {
-  const [src, setSrc] = useState(null);
+function ImagePreview({ file }: { file: File }) {
+  const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
     const reader = new FileReader();
 
     reader.addEventListener(
       'load',
-      function() {
-        setSrc(reader.result);
+      function () {
+        setSrc(reader.result as string);
       },
       false,
     );
@@ -106,10 +117,13 @@ function ImagePreview({ file }) {
   );
 }
 
-function CaptionStep({ onComplete }) {
-  function handleSubmit(e) {
+function CaptionStep({ onComplete }: { onComplete: (s: string) => void }) {
+  function handleSubmit(e: SyntheticEvent) {
     e.preventDefault();
-    onComplete(e.target.elements.caption.value);
+    const target = e.target as typeof e.target & {
+      caption: { value: string };
+    };
+    onComplete(target.caption.value);
   }
 
   return (
@@ -130,7 +144,11 @@ function CaptionStep({ onComplete }) {
   );
 }
 
-function PublishStep({ progress }) {
+function PublishStep({
+  progress,
+}: {
+  progress: { loaded: number; total: number };
+}) {
   const p = Math.round((progress.loaded / progress.total) * 100);
 
   return (
@@ -146,27 +164,35 @@ function PublishStep({ progress }) {
 
 export default function Upload() {
   const [step, setStep] = useState(1);
-  const [payload, setPayload] = useState({});
+  const [payload, setPayload] = useState<{
+    image?: File;
+  }>({});
   const [progress, setProgress] = useState({ loaded: 0, total: 1 });
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  function handleImageSelect(image) {
+  function handleImageSelect(image: File) {
     setPayload({ image });
     setStep(2);
   }
 
-  function handleCaption(caption) {
+  function handleCaption(caption: string) {
     setStep(3);
 
-    user.createPhoto({ ...payload, caption }, setProgress).then(() => {
-      navigate('/');
-    });
+    if (payload.image === undefined) {
+      throw new Error('image is not set');
+    }
+
+    user!
+      .createPhoto({ image: payload.image, caption }, setProgress)
+      .then(() => {
+        navigate('/');
+      });
   }
 
   return (
     <div className="bg-white shadow">
-      <div className="p-6 flex flex-col space-y-2 font-medium md:flex-row  md:justify-between md:items-center md:space-y-0 md:flex-row">
+      <div className="p-6 flex flex-col space-y-2 font-medium md:flex-row md:justify-between md:items-center md:space-y-0">
         <Step
           number={1}
           label="Select image"

@@ -1,6 +1,6 @@
 import { Html, Head, Body } from '@nokkio/doc';
 
-export default function Doc({ children }) {
+export default function Doc({ children }: { children: React.ReactNode }) {
   return (
     <Html>
       <Head>

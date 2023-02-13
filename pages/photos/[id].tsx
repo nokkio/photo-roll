@@ -2,23 +2,28 @@ import { Suspense } from 'react';
 
 import { Photo, usePhotoLikes } from '@nokkio/magic';
 import { usePageData } from '@nokkio/router';
+import type { PageDataArgs, PageMetadataFunction } from '@nokkio/router';
 import { createImageURL } from '@nokkio/image';
 
 import { default as PhotoComponent } from 'components/Photo';
 
-export function getPageData({ params, auth }) {
+export function getPageData({ params, auth }: PageDataArgs) {
   return Photo.findById(params.id, {
-    with: auth
-      ? {
-          user: true,
-          likes: { filter: { userId: auth.id } },
-        }
-      : ['user'],
+    with: {
+      user: true,
+      likes: auth ? { filter: { userId: auth.id } } : undefined,
+    },
     withCounts: ['likes'],
   });
 }
 
-export function getPageMetadata({ pageData }) {
+export const getPageMetadata: PageMetadataFunction<typeof getPageData> = ({
+  pageData,
+}) => {
+  if (!pageData) {
+    return { title: 'Photo not found', http: { status: 404 } };
+  }
+
   return {
     title: `Photo Roll: ${pageData.caption} by ${pageData.user.username}`,
     openGraph: {
@@ -28,9 +33,9 @@ export function getPageMetadata({ pageData }) {
       },
     },
   };
-}
+};
 
-function RecentLikes({ id }) {
+function RecentLikes({ id }: { id: string }) {
   const recentLikes = usePhotoLikes(id, {
     sort: '-createdAt',
     limit: 10,
@@ -58,8 +63,12 @@ function RecentLikes({ id }) {
   );
 }
 
-export default function PhotoRoute({ params }) {
-  const photo = usePageData();
+export default function PhotoRoute({ params }: { params: { id: string } }) {
+  const photo = usePageData<typeof getPageData>();
+
+  if (photo === null) {
+    return <h1>Photo not found</h1>;
+  }
 
   return (
     <div className="space-y-6">

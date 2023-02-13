@@ -1,8 +1,9 @@
-import React from 'react';
-
 import { useAuth } from '@nokkio/auth';
 import { Img } from '@nokkio/image';
 import { Link } from '@nokkio/router';
+
+import { PhotoWith, Like } from '@nokkio/magic';
+import { MouseEventHandler } from 'react';
 
 function Heart() {
   return (
@@ -23,22 +24,26 @@ function Heart() {
   );
 }
 
-export default function Photo({ photo }) {
-  const { isAuthenticated } = useAuth();
+export default function PhotoComponent({
+  photo,
+}: {
+  photo: PhotoWith<['user', 'likesCount']> & { likes?: Like[] };
+}) {
+  const { isAuthenticated, user } = useAuth();
 
-  function toggleLike(e) {
+  const toggleLike: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
     e.preventDefault();
 
     // Currently a bug in Nokkio causing the parent "with" clause to
     // not filter, so do a bit of extra checking here.
-    if (photo.likes.length === 1) {
+    if (photo.likes?.length === 1) {
       const like = photo.likes[0];
       like.delete();
-    } else {
-      photo.createLike();
+    } else if (user) {
+      photo.createLike({ userId: user.id });
     }
-  }
+  };
 
   return (
     <Link to={`/photos/${photo.id}`} className="flex flex-col bg-white shadow">
