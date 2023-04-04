@@ -38,5 +38,10 @@ export default async function () {
   });
 
   Like.beforeUpdate('RESTRICT_TO_ENDPOINTS');
-  Like.beforeDelete('RESTRICT_TO_ENDPOINTS');
+
+  Like.beforeDelete(async ({ record, userId }) => {
+    if (record.userId !== userId) {
+      throw new NotAuthorizedError();
+    }
+  });
 }
